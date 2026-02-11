@@ -1,4 +1,11 @@
 <?php
+session_start();
+// Cek apakah admin sudah login, jika belum lempar ke halaman login
+if (!isset($_SESSION['admin_logged_in'])) {
+    header("Location: login.php");
+    exit;
+}
+
 include '../config/db.php';
 
 // Fitur Update Status & WA Redirect
