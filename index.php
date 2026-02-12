@@ -8,7 +8,7 @@
 </head>
 <body class="bg-gray-100">
   <nav class="bg-blue-600 p-4 text-white shadow-lg">
-    <h1 class="text-xl font-bold">Toko UMKM Saya</h1>
+    <h1 class="text-xl font-bold">Toko Saya</h1>
   </nav>
 
   <div class="container mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -19,6 +19,10 @@
     <div class="bg-white p-4 rounded-lg shadow-md">
       <img src="assets/img/<?= $row['gambar'] ?>" class="w-full h-48 object-cover rounded">
       <h2 class="text-xl font-bold mt-2"><?= $row['nama'] ?></h2>
+      <div class="text-start mb-2">
+        <p><?= $row['deskripsi'] ?></p>
+      </div>
+      <p class="mb-4 font-bold">Stok : <?= $row['stok'] ?></p>
       <p class="text-green-600 font-semibold">
         Rp <?= number_format($row['harga']) ?>
       </p>
@@ -39,6 +43,8 @@
 
         <label class="text-xs text-gray-500">Harga Produk:</label>
         <input readonly type="number" name="harga" id="harga_modal" class="w-full border p-2 mb-3 rounded bg-gray-100">
+        
+        <input type="number" name="stok" id="stok" value="1" oninput="hitungTotal()" class="w-full border p-2 mb-3 rounded">
 
         <textarea name="alamat" placeholder="Alamat Lengkap" class="w-full border p-2 mb-3 rounded" required></textarea>
 
@@ -51,12 +57,21 @@
   </div>
 
   <script>
+    let hargaAsli = 0;
+    
     function openModal(id, nama, harga) {
       document.getElementById('orderModal').classList.remove('hidden');
       document.getElementById('produk_id').value = id;
       document.getElementById('modalTitle').innerText = "Pesan: " + nama;
-      // Baris sakti:
+      
+      hargaAsli = harga;
       document.getElementById('harga_modal').value = harga;
+      document.getElementById('stok').value = 1;
+    }
+    
+    function hitungTotal() {
+      let jumlah = document.getElementById('stok').value;
+      document.getElementById('harga_modal').value = hargaAsli * jumlah;
     }
 
     function closeModal() {
