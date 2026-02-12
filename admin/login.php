@@ -8,7 +8,7 @@ if (isset($_POST['login'])) {
 
     // Contoh username & password statis (untuk belajar)
     // Di dunia nyata, ini harusnya mengambil dari tabel 'users' di database
-    if ($username == "admin" && $password == "admin123") {
+    if ($username == "Admin" && $password == "admin123") {
         $_SESSION['admin_logged_in'] = true;
         header("Location: orders.php");
         exit;
