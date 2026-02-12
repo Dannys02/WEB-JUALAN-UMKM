@@ -35,19 +35,18 @@ if ($action && $id) {
       $update->bind_param("i", $id);
 
       if ($update->execute()) {
-        // Format pesan WhatsApp secara rapi
+        // Tambahkan spasi yang benar agar pesan tidak dempet
         $pesan = "Halo " . $order['nama_pembeli'] . ",\n\n" .
-        "Pesanan Anda untuk *" . $order['nama_produk'] . "* telah kami *SETUJUI*.\n" .
+        "Pesanan Anda untuk *" . $order['nama_produk'] . "* dengan harga *Rp " . number_format($order['harga']) . "* telah kami *SETUJUI*.\n\n" .
         "Mohon tunggu informasi pengiriman selanjutnya. Terima kasih!";
 
         $wa_link = "https://api.whatsapp.com/send?phone=" . preg_replace('/[^0-9]/', '', $order['whatsapp']) .
         "&text=" . urlencode($pesan);
 
-        // Redirect ke WhatsApp di tab baru via JS, lalu refresh halaman utama
-        echo "<script>
-                        window.open('$wa_link', '_blank');
-                        window.location.href = 'orders.php?status=success';
-                      </script>";
+        // Simpan link di session untuk dipicu di halaman berikutnya
+        $_SESSION['trigger_wa'] = $wa_link;
+
+        header("Location: orders.php?status=success");
         exit;
       }
     }
@@ -105,6 +104,7 @@ $count = mysqli_num_rows($all_orders); // Hitung jumlah baris
             <tr>
               <th class="p-4 font-semibold text-slate-700">Pembeli</th>
               <th class="p-4 font-semibold text-slate-700">Produk</th>
+              <th class="p-4 font-semibold text-slate-700">Harga</th>
               <th class="p-4 font-semibold text-slate-700">Status</th>
               <th class="p-4 font-semibold text-slate-700 text-center">Aksi</th>
             </tr>
@@ -123,6 +123,9 @@ $count = mysqli_num_rows($all_orders); // Hitung jumlah baris
               </td>
               <td class="p-4 text-slate-700">
                 <?= htmlspecialchars($row['nama_produk']) ?>
+              </td>
+              <td class="p-4 text-slate-700">
+                Rp <?= htmlspecialchars(number_format($row['harga']) ?? 'Tidak terdeteksi') ?>
               </td>
               <td class="p-4">
                 <?php
@@ -159,7 +162,7 @@ $count = mysqli_num_rows($all_orders); // Hitung jumlah baris
             <?php endwhile; // Penutup while diletakkan SETELAH kode baris tabel ?>
             <?php else : ?>
             <tr>
-              <td colspan="4" class="p-12 text-center">
+              <td colspan="5" class="p-12 text-center">
                 <div class="text-slate-400">
                   <svg class="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -181,6 +184,20 @@ $count = mysqli_num_rows($all_orders); // Hitung jumlah baris
       </div>
     </div>
   </div>
+  <script>
+    <?php if (isset($_SESSION['trigger_wa'])): ?>
+    // Buka WhatsApp di tab baru
+    const waWindow = window.open('<?= $_SESSION['trigger_wa'] ?>', '_blank');
+
+    // Hapus session agar tidak terbuka terus-menerus saat refresh
+    <?php unset($_SESSION['trigger_wa']); ?>
+
+    // Jika diblokir browser, beri peringatan kecil
+    if (!waWindow || waWindow.closed || typeof waWindow.closed == 'undefined') {
+      alert('Mohon izinkan pop-up untuk membuka WhatsApp secara otomatis.');
+    }
+    <?php endif; ?>
+  </script>
 
 </body>
 </html>
