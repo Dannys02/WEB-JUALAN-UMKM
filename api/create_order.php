@@ -1,20 +1,68 @@
 <?php
+session_start();
+// Cek jika user submit terlalu cepat (kurang dari 10 detik dari submit sebelumnya)
+if (isset($_SESSION['last_submit']) && (time() - $_SESSION['last_submit'] < 10)) {
+  echo "<script>alert('Mohon tunggu sebentar sebelum memesan lagi.'); history.back();</script>";
+  exit;
+}
+$_SESSION['last_submit'] = time();
+
 include '../config/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-  $produk_id = $_POST['produk_id'];
-  $nama = mysqli_real_escape_string($koneksi, $_POST['nama_pembeli']);
-  $wa = mysqli_real_escape_string($koneksi, $_POST['whatsapp']);
-  $stok = mysqli_real_escape_string($koneksi, $_POST['stok']);
-  $harga = mysqli_real_escape_string($koneksi, $_POST['harga']);
-  $alamat = mysqli_real_escape_string($koneksi, $_POST['alamat']);
+  // 1. Sanitasi & Validasi Input (WAJIB)
+  $produk_id = mysqli_real_escape_string($koneksi, $_POST['produk_id']);
+  $nama = htmlspecialchars(mysqli_real_escape_string($koneksi, $_POST['nama_pembeli']));
+  $alamat = htmlspecialchars(mysqli_real_escape_string($koneksi, $_POST['alamat']));
+  $stok = (int)$_POST['stok'];
+  $harga = (int)$_POST['harga'];
 
-  $query = "INSERT INTO pesanan (nama_pembeli, whatsapp, stok, harga, alamat, produk_id) VALUES ('$nama', '$wa', '$stok', '$harga', '$alamat', '$produk_id')";
+  // Bersihkan nomor WA agar hanya angka (menghindari error link WA)
+  $wa_pembeli = preg_replace('/[^0-9]/', '', $_POST['whatsapp']);
+
+  // Validasi jika stok diisi 0 atau negatif
+  if ($stok < 1) {
+    echo "<script>alert('Jumlah pesanan tidak valid!'); history.back();</script>";
+    exit;
+  }
+
+  $total = $harga * $stok;
+
+  // 2. Simpan ke Database
+  $query = "INSERT INTO pesanan (nama_pembeli, whatsapp, stok, harga, alamat, produk_id)
+            VALUES ('$nama', '$wa_pembeli', '$stok', '$harga', '$alamat', '$produk_id')";
 
   if (mysqli_query($koneksi, $query)) {
-    echo "<script>alert('Pesanan dikirim! Admin akan menghubungi via WA.'); window.location.href='../index.php';</script>";
+    // 3. Ambil Nama Produk (Agar Admin tidak bingung ID berapa)
+    $res = mysqli_query($koneksi, "SELECT nama FROM produk WHERE id='$produk_id' LIMIT 1");
+    $p = mysqli_fetch_assoc($res);
+    $nama_produk = ($p) ? $p['nama'] : "Produk tidak ditemukan";
+
+    // 4. Setup Pesan WhatsApp yang Rapi
+    $nomor_admin = "6285645837298";
+
+    $pesan = "*PESANAN BARU DARI WEB*\n"
+    . "--------------------------\n"
+    . "📦 *Produk:* " . $nama_produk . "\n"
+    . "🔢 *Jumlah:* " . $stok . " pcs\n"
+    . "💰 *Total:* Rp " . number_format($total, 0, ',', '.') . "\n"
+    . "--------------------------\n"
+    . "*Data Pembeli:*\n"
+    . "👤 *Nama:* " . $nama . "\n"
+    . "📱 *WA:* " . $wa_pembeli . "\n"
+    . "📍 *Alamat:* " . $alamat . "\n\n"
+    . "Mohon segera diproses ya Min!";
+
+    $url_wa = "https://api.whatsapp.com/send?phone=" . $nomor_admin . "&text=" . urlencode($pesan);
+
+    // 5. Redirect dengan Alert
+    echo "<script>
+            alert('Pesanan Terkirim! Lanjutkan konfirmasi ke WhatsApp Admin.');
+            window.location.href='$url_wa';
+          </script>";
   } else {
-    echo "Error: " . mysqli_error($koneksi);
+    // Error handling yang lebih user-friendly
+    echo "Terjadi kesalahan sistem. Silakan coba lagi.";
   }
 }
 ?>

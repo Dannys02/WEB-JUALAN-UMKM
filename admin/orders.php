@@ -18,13 +18,47 @@ $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
 if ($action && $id) {
   if ($action === 'setuju') {
-    $update = $koneksi->prepare("UPDATE pesanan SET status = 'setuju' WHERE id = ?");
-    $update->bind_param("i", $id);
-    if ($update->execute()) {
-      header("Location: orders.php?status=success");
+    // 1. Mulai Transaksi Database
+    $koneksi->begin_transaction();
+
+    try {
+      // 2. Ambil data stok yang dipesan dan produk_id terlebih dahulu
+      $stmt_info = $koneksi->prepare("SELECT produk_id, stok FROM pesanan WHERE id = ?");
+      $stmt_info->bind_param("i", $id);
+      $stmt_info->execute();
+      $result_info = $stmt_info->get_result();
+      $order_data = $result_info->fetch_assoc();
+
+      if ($order_data) {
+        $produk_id = $order_data['produk_id'];
+        $jumlah_beli = $order_data['stok'];
+
+        // 3. Update status pesanan jadi 'setuju'
+        $update_order = $koneksi->prepare("UPDATE pesanan SET status = 'setuju' WHERE id = ?");
+        $update_order->bind_param("i", $id);
+        $update_order->execute();
+
+        // 4. Kurangi stok di tabel produk
+        // Query ini langsung mengurangi nilai stok yang ada di database
+        $update_stock = $koneksi->prepare("UPDATE produk SET stok = stok - ? WHERE id = ?");
+        $update_stock->bind_param("ii", $jumlah_beli, $produk_id);
+        $update_stock->execute();
+
+        // 5. Jika semua berhasil, simpan perubahan (commit)
+        $koneksi->commit();
+        
+        header("Location: orders.php?status=success");
+        exit;
+      }
+    } catch (Exception $e) {
+      // 6. Jika ada error, batalkan semua perubahan
+      $koneksi->rollback();
+      header("Location: orders.php?status=error");
       exit;
     }
+
   } elseif ($action === 'tolak') {
+    // ... kode tolak Anda tetap sama ...
     $update = $koneksi->prepare("UPDATE pesanan SET status = 'tolak' WHERE id = ?");
     $update->bind_param("i", $id);
     $update->execute();
@@ -48,6 +82,7 @@ $count = mysqli_num_rows($all_orders);
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <title>Admin Dashboard - Kelola Pesanan</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
   <script>
     // FUNGSI HANDLE KONFIRMASI & WA
     function handleSetuju(url, waLink) {
@@ -163,6 +198,7 @@ $count = mysqli_num_rows($all_orders);
       </div>
     </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
   <script src="../assets/js/orders.js"></script>
 </body>
 </html>

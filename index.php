@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <title>Katalog UMKM</title>
 </head>
@@ -17,12 +18,17 @@
     while ($row = mysqli_fetch_assoc($query)):
     ?>
     <div class="bg-white p-4 rounded-lg shadow-md">
-      <img src="assets/img/<?= $row['gambar'] ?>" class="w-full h-48 object-cover rounded">
+      <!--<img src="assets/img/<?= $row['gambar'] ?>" class="w-full h-48 object-cover rounded">-->
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAGuMZRXIMk_6JJ_CBwRVZ9nurSZfes0l9-ow3TFragmk3_tJuXuRkBWYN&s=10" class="w-full h-48 object-cover rounded">
       <h2 class="text-xl font-bold mt-2"><?= $row['nama'] ?></h2>
       <div class="text-start mb-2">
-        <p><?= $row['deskripsi'] ?></p>
+        <p>
+          <?= $row['deskripsi'] ?>
+        </p>
       </div>
-      <p class="mb-4 font-bold">Stok : <?= $row['stok'] ?></p>
+      <p class="mb-4 font-bold">
+        Stok : <?= $row['stok'] ?>
+      </p>
       <p class="text-green-600 font-semibold">
         Rp <?= number_format($row['harga']) ?>
       </p>
@@ -43,7 +49,7 @@
 
         <label class="text-xs text-gray-500">Harga Produk:</label>
         <input readonly type="number" name="harga" id="harga_modal" class="w-full border p-2 mb-3 rounded bg-gray-100">
-        
+
         <input type="number" name="stok" id="stok" value="1" oninput="hitungTotal()" class="w-full border p-2 mb-3 rounded">
 
         <textarea name="alamat" placeholder="Alamat Lengkap" class="w-full border p-2 mb-3 rounded" required></textarea>
