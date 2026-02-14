@@ -46,7 +46,7 @@ if ($action && $id) {
 
         // 5. Jika semua berhasil, simpan perubahan (commit)
         $koneksi->commit();
-        
+
         header("Location: orders.php?status=success");
         exit;
       }
@@ -164,10 +164,17 @@ $count = mysqli_num_rows($all_orders);
                   $clean_phone = '62' . substr($clean_phone, 1);
                 }
 
-                $pesan = "Halo " . $row['nama_pembeli'] . ",\n\n" .
-                "Pesanan Anda untuk *" . $row['nama_produk'] . "* dengan harga *" .
-                number_format($row['harga']) . "* dan stok *" . $row['stok'] . "* telah kami *SETUJUI*.\n\n" .
-                "Terima kasih!";
+                $pesan = "*KONFIRMASI PESANAN - " . strtoupper($row['nama_toko'] ?? 'TOKO KAMI') . "*\n"
+                . "--------------------------\n"
+                . "Halo *" . $row['nama_pembeli'] . "*, pesanan Anda telah kami *SETUJUI*.\n\n"
+                . "📦 *Detail Produk:*\n"
+                . "Nama: " . $row['nama_produk'] . "\n"
+                . "Jumlah: " . $row['stok'] . " pcs\n"
+                . "Total: Rp " . number_format($row['harga'] * $row['stok'], 0, ',', '.') . "\n"
+                . "--------------------------\n"
+                . "✅ *Status:* Siap Dikirim\n\n"
+                . "Mohon tunggu informasi selanjutnya. Terima kasih sudah berbelanja!";
+
                 $wa_link = "https://api.whatsapp.com/send?phone=" . $clean_phone . "&text=" . urlencode($pesan);
                 $db_url = "?action=setuju&id=" . (int)$row['id'];
                 ?>

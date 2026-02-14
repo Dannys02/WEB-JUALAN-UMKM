@@ -1,8 +1,14 @@
 <?php
 session_start();
-// Cek jika user submit terlalu cepat (kurang dari 10 detik dari submit sebelumnya)
+
+// 1. CEK PERANGKAP BOT (Honeypot)
+if (!empty($_POST['perangkap'])) {
+  die("Bot detected!"); // Jika terisi, langsung matikan script
+}
+
+// 2. CEK JEDA WAKTU (Rate Limit)
 if (isset($_SESSION['last_submit']) && (time() - $_SESSION['last_submit'] < 10)) {
-  echo "<script>alert('Mohon tunggu sebentar sebelum memesan lagi.'); history.back();</script>";
+  echo "<script>alert('Mohon tunggu sebentar.'); history.back();</script>";
   exit;
 }
 $_SESSION['last_submit'] = time();
