@@ -1,4 +1,8 @@
-<?php include 'config/db.php'; ?>
+<?php
+session_start();
+$_SESSION['load_time'] = time();
+include 'config/db.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,7 +47,7 @@
       <h3 id="modalTitle" class="text-lg font-bold mb-4">Form Order</h3>
       <form action="api/create_order.php" method="POST">
         <input type="hidden" name="produk_id" id="produk_id">
-        <input type="text" name="perangkap" style="display:none;" autocomplete="off">
+        <input type="text" name="perangkap" class="absolute -top-[9999px] -left-[9999px]" tabindex="-1" autocomplete="off">
         <input type="text" name="nama_pembeli" placeholder="Nama Anda" class="w-full border p-2 mb-3 rounded" required>
         <input type="number" name="whatsapp" placeholder="Nomor WA (Contoh: 62812...)" class="w-full border p-2 mb-3 rounded" required>
         <label class="text-xs text-gray-500">Harga Produk:</label>
@@ -52,7 +56,7 @@
         <textarea name="alamat" placeholder="Alamat Lengkap" class="w-full border p-2 mb-3 rounded" required></textarea>
         <div class="flex justify-end gap-2">
           <button type="button" onclick="closeModal()" class="bg-gray-400 px-4 py-2 rounded">Batal</button>
-          <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Kirim Pesanan</button>
+          <button onclick="setTimeout(closeModal, 500)" type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Kirim Pesanan</button>
         </div>
       </form>
     </div>
